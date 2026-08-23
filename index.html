@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17455E">
+<title>Obra em casa — serviços do Jonathan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cimento:#E4E1DA;
+  --concreto:#F6F4F0;
+  --grafite:#23211E;
+  --grafite-fraco:#6B665E;
+  --blueprint:#17455E;
+  --blueprint-claro:#2E6D8E;
+  --nivel:#F5B301;
+  --verde:#2E7D4F;
+  --vermelho:#B3261E;
+  --linha:#CFCAC0;
+  --r:10px;
+  --sombra:0 1px 0 var(--linha), 0 6px 18px rgba(35,33,30,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--cimento);
+  color:var(--grafite);
+  font-family:"Instrument Sans",system-ui,sans-serif;
+  font-size:15px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+h1,h2,h3{font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;margin:0;letter-spacing:-.02em}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blueprint);outline-offset:2px}
+.wrap{max-width:920px;margin:0 auto;padding:0 14px}
+
+/* ---------- topo ---------- */
+.topo{background:var(--blueprint);color:#fff;padding:14px 0 0}
+.topo-linha{display:flex;align-items:baseline;gap:10px;justify-content:space-between}
+.topo h1{font-size:19px;font-weight:800;color:#fff}
+.topo .sub{font-size:12px;color:#B9D3E2;letter-spacing:.04em;text-transform:uppercase}
+.conta{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;
+  border-radius:99px;padding:5px 11px;font-size:12px}
+.conta:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- trena (assinatura) ---------- */
+.trena{margin-top:12px;padding-bottom:14px}
+.trena-topo{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px}
+.trena-rot{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#B9D3E2}
+.trena-val{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:600;line-height:1}
+.trena-val.negativo{color:var(--nivel)}
+.fita{position:relative;height:34px;background:#0E3247;border-radius:5px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.14)}
+.fita-fill{position:absolute;inset:0 auto 0 0;width:0;background:var(--nivel);
+  transition:width .5s cubic-bezier(.2,.7,.3,1)}
+.fita-ticks{position:absolute;inset:0;display:flex}
+.fita-ticks i{flex:1;border-right:1px solid rgba(255,255,255,.22)}
+.fita-ticks i:nth-child(5n){border-right-color:rgba(255,255,255,.5)}
+.fita-ticks i:last-child{border-right:0}
+.fita-legenda{display:flex;justify-content:space-between;font-size:11px;color:#B9D3E2;margin-top:5px}
+.fita-legenda b{color:#fff;font-weight:500}
+@media (prefers-reduced-motion:reduce){.fita-fill{transition:none}}
+
+/* ---------- abas ---------- */
+.abas{display:flex;gap:2px;background:var(--blueprint);padding:0 0 0}
+.aba{flex:1;background:transparent;border:0;color:#B9D3E2;padding:11px 4px 12px;
+  font-size:13px;font-weight:600;border-bottom:3px solid transparent}
+.aba[aria-selected="true"]{color:#fff;border-bottom-color:var(--nivel)}
+
+/* ---------- conteúdo ---------- */
+main{padding:16px 0 60px}
+.painel[hidden]{display:none}
+.barra{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.barra h2{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--grafite-fraco);font-weight:600}
+.btn{background:var(--blueprint);color:#fff;border:0;border-radius:var(--r);padding:9px 15px;font-weight:600;font-size:14px}
+.btn:hover{background:var(--blueprint-claro)}
+.btn.sec{background:transparent;color:var(--blueprint);border:1px solid var(--linha)}
+.btn.sec:hover{background:#fff}
+.btn.perigo{background:transparent;color:var(--vermelho);border:1px solid var(--linha)}
+
+.hora{display:flex;align-items:center;gap:10px;background:var(--concreto);border:1px solid var(--linha);
+  border-radius:var(--r);padding:10px 13px;margin-bottom:14px;box-shadow:var(--sombra)}
+.hora label{font-size:13px;color:var(--grafite-fraco);font-weight:500}
+.hora input{width:110px;font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;
+  border:0;border-bottom:2px solid var(--nivel);background:transparent;padding:2px 4px;color:var(--grafite)}
+.hora .dica{font-size:12px;color:var(--grafite-fraco);margin-left:auto;text-align:right}
+
+/* cartões de serviço */
+.lista{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--concreto);border:1px solid var(--linha);border-radius:var(--r);
+  padding:12px 14px;box-shadow:var(--sombra);width:100%;text-align:left;
+  display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;color:inherit}
+.card:hover{border-color:var(--blueprint-claro)}
+.card .nome{font-weight:600;font-size:15px}
+.card .local{font-size:13px;color:var(--grafite-fraco)}
+.card .custo{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:16px;text-align:right}
+.card .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.tag{font-size:11px;letter-spacing:.04em;padding:3px 8px;border-radius:99px;border:1px solid var(--linha);
+  color:var(--grafite-fraco);background:#fff}
+.tag.st-fazer{border-color:#D8D3C9}
+.tag.st-andamento{background:#FFF6DF;border-color:var(--nivel);color:#8A6300}
+.tag.st-concluido{background:#E7F3EC;border-color:#9CCBB0;color:var(--verde)}
+.tag.tempo{font-family:"IBM Plex Mono",monospace}
+
+/* linhas de material */
+.mat{background:var(--concreto);border:1px solid var(--linha);border-radius:var(--r);
+  padding:11px 14px;box-shadow:var(--sombra);display:grid;grid-template-columns:1fr auto;gap:2px 12px;
+  width:100%;text-align:left;color:inherit}
+.mat .item{font-weight:600}
+.mat .det{font-size:12.5px;color:var(--grafite-fraco)}
+.mat .valor{font-family:"IBM Plex Mono",monospace;font-weight:600;text-align:right}
+.mat .saldo{grid-column:2;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--grafite-fraco);text-align:right}
+
+/* resumo */
+.grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.stat{background:var(--concreto);border:1px solid var(--linha);border-radius:var(--r);padding:13px 14px;box-shadow:var(--sombra)}
+.stat .rot{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--grafite-fraco)}
+.stat .val{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;margin-top:5px}
+.stat .val.pos{color:var(--verde)} .stat .val.neg{color:var(--vermelho)}
+
+/* vazio */
+.vazio{background:var(--concreto);border:1px dashed var(--linha);border-radius:var(--r);
+  padding:26px 18px;text-align:center;color:var(--grafite-fraco)}
+.vazio p{margin:0 0 12px}
+
+/* ---------- formulário em folha ---------- */
+.fundo{position:fixed;inset:0;background:rgba(35,33,30,.5);display:flex;align-items:flex-end;
+  justify-content:center;z-index:50}
+.fundo[hidden]{display:none}
+.folha{background:var(--cimento);width:100%;max-width:520px;border-radius:14px 14px 0 0;
+  padding:18px 16px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;
+  animation:sobe .22s ease-out}
+@keyframes sobe{from{transform:translateY(18px)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.folha{animation:none}}
+@media (min-width:560px){.fundo{align-items:center}.folha{border-radius:14px}}
+.folha h3{font-size:18px;margin-bottom:14px}
+.campo{margin-bottom:12px}
+.campo label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--grafite-fraco);margin-bottom:4px;font-weight:600}
+.campo input,.campo select,.campo textarea{width:100%;padding:9px 11px;border:1px solid var(--linha);
+  border-radius:8px;background:#fff;font:inherit;color:var(--grafite)}
+.campo input[type=number]{font-family:"IBM Plex Mono",monospace}
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.acoes{display:flex;gap:8px;margin-top:16px}
+.acoes .btn{flex:1}
+
+/* ---------- estados globais ---------- */
+.tela{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.aviso{background:var(--concreto);border:1px solid var(--linha);border-radius:var(--r);
+  padding:22px;max-width:520px;box-shadow:var(--sombra)}
+.aviso h2{font-size:20px;margin-bottom:8px}
+.aviso p{color:var(--grafite-fraco);margin:0 0 14px}
+.aviso ol{color:var(--grafite-fraco);padding-left:20px;margin:0 0 14px}
+.aviso code{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:#fff;
+  border:1px solid var(--linha);border-radius:5px;padding:1px 5px}
+.erro{color:var(--vermelho);font-size:13px;margin-top:10px;min-height:18px}
+</style>
+</head>
+<body>
+
+<!-- ====== login / configuração ====== -->
+<section id="telaEntrada" class="tela">
+  <div class="aviso">
+    <h2 id="entradaTitulo">Obra em casa</h2>
+    <p id="entradaTexto">Controle dos serviços do Jonathan e do material que entra como pagamento.</p>
+    <button class="btn" id="btnEntrar">Entrar com o Google</button>
+    <div class="erro" id="entradaErro"></div>
+  </div>
+</section>
+
+<!-- ====== app ====== -->
+<div id="app" hidden>
+  <header class="topo">
+    <div class="wrap">
+      <div class="topo-linha">
+        <div>
+          <h1>Obra em casa</h1>
+          <div class="sub">Serviços do Jonathan</div>
+        </div>
+        <button class="conta" id="btnSair">Sair</button>
+      </div>
+
+      <div class="trena">
+        <div class="trena-topo">
+          <span class="trena-rot" id="trenaRot">Saldo em material</span>
+          <span class="trena-val num" id="trenaVal">R$ 0,00</span>
+        </div>
+        <div class="fita">
+          <div class="fita-fill" id="fitaFill"></div>
+          <div class="fita-ticks" id="fitaTicks"></div>
+        </div>
+        <div class="fita-legenda">
+          <span>Retirado <b class="num" id="fitaRetirado">R$ 0,00</b></span>
+          <span>Gerado <b class="num" id="fitaGerado">R$ 0,00</b></span>
+        </div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="abas" role="tablist">
+        <button class="aba" role="tab" aria-selected="true" data-painel="servicos">Serviços</button>
+        <button class="aba" role="tab" aria-selected="false" data-painel="materiais">Materiais</button>
+        <button class="aba" role="tab" aria-selected="false" data-painel="resumo">Resumo</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- serviços -->
+    <section class="painel" id="painel-servicos">
+      <div class="hora">
+        <label for="valorHora">Valor da hora</label>
+        <input id="valorHora" type="number" min="0" step="0.5" inputmode="decimal">
+        <span class="dica">Muda o custo de todos<br>os serviços</span>
+      </div>
+      <div class="barra">
+        <h2>Serviços</h2>
+        <button class="btn" id="btnNovoServico">Novo serviço</button>
+      </div>
+      <div class="lista" id="listaServicos"></div>
+    </section>
+
+    <!-- materiais -->
+    <section class="painel" id="painel-materiais" hidden>
+      <div class="barra">
+        <h2>Material retirado</h2>
+        <button class="btn" id="btnNovoMaterial">Lançar material</button>
+      </div>
+      <div class="lista" id="listaMateriais"></div>
+    </section>
+
+    <!-- resumo -->
+    <section class="painel" id="painel-resumo" hidden>
+      <div class="barra"><h2>Resumo do acerto</h2></div>
+      <div class="grade" id="grade"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ====== folha de serviço ====== -->
+<div class="fundo" id="fundoServico" hidden>
+  <div class="folha" role="dialog" aria-modal="true" aria-labelledby="tituloServico">
+    <h3 id="tituloServico">Novo serviço</h3>
+    <div class="campo"><label for="sNome">Serviço</label><input id="sNome" placeholder="Pendurar prateleiras"></div>
+    <div class="campo"><label for="sLocal">Ambiente</label><input id="sLocal" placeholder="Quarto da Luara"></div>
+    <div class="dupla">
+      <div class="campo"><label for="sEst">Tempo estimado (h)</label><input id="sEst" type="number" min="0" step="0.5" inputmode="decimal"></div>
+      <div class="campo"><label for="sGasto">Tempo gasto (h)</label><input id="sGasto" type="number" min="0" step="0.5" inputmode="decimal"></div>
+    </div>
+    <div class="campo"><label for="sStatus">Status</label>
+      <select id="sStatus"><option>A fazer</option><option>Em andamento</option><option>Concluído</option></select>
+    </div>
+    <div class="dupla">
+      <div class="campo"><label for="sPrev">Data prevista</label><input id="sPrev" type="date"></div>
+      <div class="campo"><label for="sConcl">Data conclusão</label><input id="sConcl" type="date"></div>
+    </div>
+    <div class="campo"><label for="sObs">Observações</label><textarea id="sObs" rows="2"></textarea></div>
+    <div class="erro" id="sErro"></div>
+    <div class="acoes">
+      <button class="btn sec" data-fechar="fundoServico">Cancelar</button>
+      <button class="btn" id="btnSalvarServico">Salvar</button>
+    </div>
+    <div class="acoes" id="acaoExcluirServico" hidden>
+      <button class="btn perigo" id="btnExcluirServico">Excluir serviço</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== folha de material ====== -->
+<div class="fundo" id="fundoMaterial" hidden>
+  <div class="folha" role="dialog" aria-modal="true" aria-labelledby="tituloMaterial">
+    <h3 id="tituloMaterial">Lançar material</h3>
+    <div class="campo"><label for="mItem">Item</label><input id="mItem" placeholder="Saco de massa corrida 20 kg"></div>
+    <div class="dupla">
+      <div class="campo"><label for="mQtd">Quantidade</label><input id="mQtd" type="number" min="0" step="0.01" inputmode="decimal"></div>
+      <div class="campo"><label for="mUnid">Unidade</label><input id="mUnid" placeholder="un" value="un"></div>
+    </div>
+    <div class="dupla">
+      <div class="campo"><label for="mValor">Valor unitário (R$)</label><input id="mValor" type="number" min="0" step="0.01" inputmode="decimal"></div>
+      <div class="campo"><label for="mData">Data</label><input id="mData" type="date"></div>
+    </div>
+    <div class="campo"><label for="mLoja">Loja</label><input id="mLoja" placeholder="Depósito Central"></div>
+    <div class="campo"><label for="mServico">Referente ao serviço</label><select id="mServico"></select></div>
+    <div class="campo"><label for="mObs">Observações</label><textarea id="mObs" rows="2"></textarea></div>
+    <div class="erro" id="mErro"></div>
+    <div class="acoes">
+      <button class="btn sec" data-fechar="fundoMaterial">Cancelar</button>
+      <button class="btn" id="btnSalvarMaterial">Salvar</button>
+    </div>
+    <div class="acoes" id="acaoExcluirMaterial" hidden>
+      <button class="btn perigo" id="btnExcluirMaterial">Excluir lançamento</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/* =========================================================
+   1) CONFIGURAÇÃO DO FIREBASE
+   Cole aqui o objeto que o Firebase mostra em
+   Configurações do projeto > Seus apps > Web.
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "COLE_SUA_API_KEY",
+  authDomain: "SEU-PROJETO.firebaseapp.com",
+  projectId: "SEU-PROJETO",
+  storageBucket: "SEU-PROJETO.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:xxxxxxxxxxxx"
+};
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const $ = s => document.querySelector(s);
+const telaEntrada = $("#telaEntrada"), app = $("#app");
+
+/* --- configuração ainda não preenchida --- */
+if (firebaseConfig.apiKey.startsWith("COLE_")) {
+  $("#entradaTitulo").textContent = "Falta conectar o Firebase";
+  $("#entradaTexto").innerHTML =
+    "Abra o <code>index.html</code> e substitua o bloco <code>firebaseConfig</code> pelos dados do seu projeto. " +
+    "O passo a passo está no <code>README.md</code>.";
+  $("#btnEntrar").hidden = true;
+} else {
+  iniciar();
+}
+
+function iniciar(){
+const fb = initializeApp(firebaseConfig);
+const auth = getAuth(fb);
+const db = getFirestore(fb);
+
+const refConfig   = doc(db, "config", "geral");
+const refServicos = collection(db, "servicos");
+const refMateriais= collection(db, "materiais");
+
+let valorHora = 30, servicos = [], materiais = [];
+let editandoServico = null, editandoMaterial = null;
+
+const brl = v => (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const hs  = v => (v||0).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}) + " h";
+const dataBR = s => s ? s.split("-").reverse().join("/") : "";
+const hoje = () => new Date().toISOString().slice(0,10);
+const custoDe = s => (Number(s.tempoGasto) || Number(s.tempoEstimado) || 0) * valorHora;
+const totalMat = m => (Number(m.qtd)||0) * (Number(m.valorUnit)||0);
+
+/* ---------- autenticação ---------- */
+$("#btnEntrar").addEventListener("click", async () => {
+  $("#entradaErro").textContent = "";
+  const provider = new GoogleAuthProvider();
+  try { await signInWithPopup(auth, provider); }
+  catch (e) {
+    if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment") {
+      await signInWithRedirect(auth, provider);
+    } else {
+      $("#entradaErro").textContent = "Não deu para entrar: " + e.code;
+    }
+  }
+});
+$("#btnSair").addEventListener("click", () => signOut(auth));
+
+onAuthStateChanged(auth, user => {
+  telaEntrada.hidden = !!user;
+  app.hidden = !user;
+  if (user) ouvir();
+});
+
+/* ---------- leitura em tempo real ---------- */
+let ouvindo = false;
+function ouvir(){
+  if (ouvindo) return; ouvindo = true;
+
+  onSnapshot(refConfig, snap => {
+    valorHora = snap.exists() ? Number(snap.data().valorHora) || 0 : 30;
+    if (document.activeElement !== $("#valorHora")) $("#valorHora").value = valorHora;
+    render();
+  }, erroLeitura);
+
+  onSnapshot(query(refServicos, orderBy("ordem")), snap => {
+    servicos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, erroLeitura);
+
+  onSnapshot(query(refMateriais, orderBy("data")), snap => {
+    materiais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, erroLeitura);
+}
+function erroLeitura(e){
+  $("#entradaErro").textContent = "Sem permissão para ler os dados (" + e.code + "). Confira as regras do Firestore.";
+}
+
+/* ---------- valor da hora ---------- */
+$("#valorHora").addEventListener("change", async e => {
+  const v = Number(e.target.value) || 0;
+  await setDoc(refConfig, { valorHora: v }, { merge: true });
+});
+
+/* ---------- abas ---------- */
+document.querySelectorAll(".aba").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".aba").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll(".painel").forEach(p => p.hidden = p.id !== "painel-" + b.dataset.painel);
+}));
+
+/* ---------- render ---------- */
+function render(){
+  const gerado   = servicos.reduce((t,s) => t + custoDe(s), 0);
+  const retirado = materiais.reduce((t,m) => t + totalMat(m), 0);
+  const saldo    = gerado - retirado;
+
+  // trena
+  $("#trenaVal").textContent = brl(saldo);
+  $("#trenaVal").classList.toggle("negativo", saldo < 0);
+  $("#trenaRot").textContent = saldo < 0 ? "Material retirado a mais" : "Saldo em material";
+  $("#fitaRetirado").textContent = brl(retirado);
+  $("#fitaGerado").textContent = brl(gerado);
+  $("#fitaFill").style.width = (gerado > 0 ? Math.min(100, retirado / gerado * 100) : 0) + "%";
+  if (!$("#fitaTicks").children.length)
+    $("#fitaTicks").innerHTML = Array.from({length:20}, () => "<i></i>").join("");
+
+  renderServicos();
+  renderMateriais();
+  renderResumo(gerado, retirado, saldo);
+}
+
+function renderServicos(){
+  const alvo = $("#listaServicos");
+  if (!servicos.length){
+    alvo.innerHTML = `<div class="vazio">
+      <p>Nenhum serviço na lista ainda.</p>
+      <button class="btn sec" id="btnSemente">Carregar a lista da planilha</button></div>`;
+    $("#btnSemente").addEventListener("click", semear);
+    return;
+  }
+  alvo.innerHTML = servicos.map(s => {
+    const cls = s.status === "Concluído" ? "st-concluido" : s.status === "Em andamento" ? "st-andamento" : "st-fazer";
+    const tempo = s.tempoGasto ? hs(s.tempoGasto) + " gastas" : s.tempoEstimado ? hs(s.tempoEstimado) + " previstas" : "sem tempo";
+    const quando = s.dataConclusao ? "concluído " + dataBR(s.dataConclusao)
+                 : s.dataPrevista  ? "previsto "  + dataBR(s.dataPrevista) : "";
+    return `<button class="card" data-servico="${s.id}">
+      <span>
+        <span class="nome">${esc(s.nome)}</span><br>
+        <span class="local">${esc(s.local || "")}</span>
+      </span>
+      <span class="custo">${brl(custoDe(s))}</span>
+      <span class="meta">
+        <span class="tag ${cls}">${esc(s.status || "A fazer")}</span>
+        <span class="tag tempo">${tempo}</span>
+        ${quando ? `<span class="tag">${quando}</span>` : ""}
+      </span>
+    </button>`;
+  }).join("");
+  alvo.querySelectorAll("[data-servico]").forEach(el =>
+    el.addEventListener("click", () => abrirServico(servicos.find(s => s.id === el.dataset.servico))));
+}
+
+function renderMateriais(){
+  const alvo = $("#listaMateriais");
+  if (!materiais.length){
+    alvo.innerHTML = `<div class="vazio"><p>Nada retirado ainda. Cada material lançado abate do saldo.</p></div>`;
+    return;
+  }
+  const gerado = servicos.reduce((t,s) => t + custoDe(s), 0);
+  let acumulado = 0;
+  alvo.innerHTML = materiais.map(m => {
+    acumulado += totalMat(m);
+    const serv = servicos.find(s => s.id === m.servicoId);
+    const det = [dataBR(m.data), `${m.qtd || 0} ${m.unidade || "un"} × ${brl(m.valorUnit)}`, m.loja, serv && serv.nome]
+      .filter(Boolean).join(" · ");
+    return `<button class="mat" data-material="${m.id}">
+      <span class="item">${esc(m.item)}</span>
+      <span class="valor">${brl(totalMat(m))}</span>
+      <span class="det">${esc(det)}</span>
+      <span class="saldo">sobra ${brl(gerado - acumulado)}</span>
+    </button>`;
+  }).join("");
+  alvo.querySelectorAll("[data-material]").forEach(el =>
+    el.addEventListener("click", () => abrirMaterial(materiais.find(m => m.id === el.dataset.material))));
+}
+
+function renderResumo(gerado, retirado, saldo){
+  const est = servicos.reduce((t,s) => t + (Number(s.tempoEstimado)||0), 0);
+  const gasto = servicos.reduce((t,s) => t + (Number(s.tempoGasto)||0), 0);
+  const feitos = servicos.filter(s => s.status === "Concluído").length;
+  const itens = [
+    ["Valor da hora", brl(valorHora), ""],
+    ["Serviços concluídos", `${feitos} de ${servicos.length}`, ""],
+    ["Tempo estimado", hs(est), ""],
+    ["Tempo gasto", hs(gasto), ""],
+    ["Gerado em serviços", brl(gerado), ""],
+    ["Retirado em material", brl(retirado), ""],
+    ["Saldo", brl(saldo), saldo < 0 ? "neg" : "pos"]
+  ];
+  $("#grade").innerHTML = itens.map(([r,v,c]) =>
+    `<div class="stat"><div class="rot">${r}</div><div class="val ${c}">${v}</div></div>`).join("");
+}
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- folha: serviço ---------- */
+function abrirServico(s){
+  editandoServico = s || null;
+  $("#tituloServico").textContent = s ? "Editar serviço" : "Novo serviço";
+  $("#sNome").value = s?.nome || "";
+  $("#sLocal").value = s?.local || "";
+  $("#sEst").value = s?.tempoEstimado ?? "";
+  $("#sGasto").value = s?.tempoGasto ?? "";
+  $("#sStatus").value = s?.status || "A fazer";
+  $("#sPrev").value = s?.dataPrevista || "";
+  $("#sConcl").value = s?.dataConclusao || "";
+  $("#sObs").value = s?.obs || "";
+  $("#sErro").textContent = "";
+  $("#acaoExcluirServico").hidden = !s;
+  $("#fundoServico").hidden = false;
+  $("#sNome").focus();
+}
+$("#btnNovoServico").addEventListener("click", () => abrirServico(null));
+
+$("#btnSalvarServico").addEventListener("click", async () => {
+  const nome = $("#sNome").value.trim();
+  if (!nome) { $("#sErro").textContent = "Escreva o nome do serviço."; return; }
+  const dados = {
+    nome,
+    local: $("#sLocal").value.trim(),
+    tempoEstimado: num($("#sEst").value),
+    tempoGasto: num($("#sGasto").value),
+    status: $("#sStatus").value,
+    dataPrevista: $("#sPrev").value || "",
+    dataConclusao: $("#sConcl").value || "",
+    obs: $("#sObs").value.trim()
+  };
+  try {
+    if (editandoServico) await updateDoc(doc(db,"servicos",editandoServico.id), dados);
+    else await addDoc(refServicos, { ...dados, ordem: servicos.length + 1 });
+    $("#fundoServico").hidden = true;
+  } catch(e){ $("#sErro").textContent = "Não salvou: " + e.code; }
+});
+
+$("#btnExcluirServico").addEventListener("click", async () => {
+  if (!editandoServico || !confirm("Excluir “" + editandoServico.nome + "”?")) return;
+  await deleteDoc(doc(db,"servicos",editandoServico.id));
+  $("#fundoServico").hidden = true;
+});
+
+/* ---------- folha: material ---------- */
+function abrirMaterial(m){
+  editandoMaterial = m || null;
+  $("#tituloMaterial").textContent = m ? "Editar lançamento" : "Lançar material";
+  $("#mItem").value = m?.item || "";
+  $("#mQtd").value = m?.qtd ?? "";
+  $("#mUnid").value = m?.unidade || "un";
+  $("#mValor").value = m?.valorUnit ?? "";
+  $("#mData").value = m?.data || hoje();
+  $("#mLoja").value = m?.loja || "";
+  $("#mObs").value = m?.obs || "";
+  $("#mServico").innerHTML = `<option value="">— sem vínculo —</option>` +
+    servicos.map(s => `<option value="${s.id}">${esc(s.nome)}</option>`).join("");
+  $("#mServico").value = m?.servicoId || "";
+  $("#mErro").textContent = "";
+  $("#acaoExcluirMaterial").hidden = !m;
+  $("#fundoMaterial").hidden = false;
+  $("#mItem").focus();
+}
+$("#btnNovoMaterial").addEventListener("click", () => abrirMaterial(null));
+
+$("#btnSalvarMaterial").addEventListener("click", async () => {
+  const item = $("#mItem").value.trim();
+  if (!item) { $("#mErro").textContent = "Escreva o nome do item."; return; }
+  const dados = {
+    item,
+    qtd: num($("#mQtd").value),
+    unidade: $("#mUnid").value.trim() || "un",
+    valorUnit: num($("#mValor").value),
+    data: $("#mData").value || hoje(),
+    loja: $("#mLoja").value.trim(),
+    servicoId: $("#mServico").value,
+    obs: $("#mObs").value.trim()
+  };
+  try {
+    if (editandoMaterial) await updateDoc(doc(db,"materiais",editandoMaterial.id), dados);
+    else await addDoc(refMateriais, dados);
+    $("#fundoMaterial").hidden = true;
+  } catch(e){ $("#mErro").textContent = "Não salvou: " + e.code; }
+});
+
+$("#btnExcluirMaterial").addEventListener("click", async () => {
+  if (!editandoMaterial || !confirm("Excluir “" + editandoMaterial.item + "”?")) return;
+  await deleteDoc(doc(db,"materiais",editandoMaterial.id));
+  $("#fundoMaterial").hidden = true;
+});
+
+/* ---------- fechar folhas ---------- */
+document.querySelectorAll("[data-fechar]").forEach(b =>
+  b.addEventListener("click", () => { $("#" + b.dataset.fechar).hidden = true; }));
+document.querySelectorAll(".fundo").forEach(f =>
+  f.addEventListener("click", e => { if (e.target === f) f.hidden = true; }));
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.querySelectorAll(".fundo").forEach(f => f.hidden = true);
+});
+
+const num = v => v === "" || v === null ? null : Number(v);
+
+/* ---------- carga inicial (a lista da planilha) ---------- */
+async function semear(){
+  const base = [
+    ["Pendurar prateleiras","Quarto da Luara",null,null,"A fazer","",""],
+    ["Fixar o trava-porta","Quarto da Luara",null,null,"A fazer","",""],
+    ["Trocar o gabinete","Banheiro",1,null,"A fazer","2026-08-21",""],
+    ["Passar massa corrida na parede","Sala e entrada da cozinha",null,null,"A fazer","",""],
+    ["Passar massa corrida","Fachada da casa",null,null,"A fazer","",""],
+    ["Fechar parede","Escritório do Vini",null,null,"A fazer","",""],
+    ["Instalação Torneira","Cozinha",1,1,"Concluído","2026-08-18","2026-08-18"],
+    ["Instalação Forro","Sala e entrada da cozinha",8,8,"Concluído","2026-08-14","2026-08-14"]
+  ];
+  for (let i = 0; i < base.length; i++){
+    const [nome,local,tempoEstimado,tempoGasto,status,dataPrevista,dataConclusao] = base[i];
+    await addDoc(refServicos, { nome, local, tempoEstimado, tempoGasto, status, dataPrevista, dataConclusao, obs:"", ordem: i+1 });
+  }
+  await setDoc(refConfig, { valorHora: 30 }, { merge: true });
+}
+}
+</script>
+</body>
+</html>
