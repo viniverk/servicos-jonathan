@@ -168,7 +168,11 @@ main{padding:16px 0 60px}
   <div class="aviso">
     <h2 id="entradaTitulo">Obra em casa</h2>
     <p id="entradaTexto">Controle dos serviços do Jonathan e do material que entra como pagamento.</p>
-    <button class="btn" id="btnEntrar">Entrar com o Google</button>
+    <div class="campo" id="campoSenha">
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="btn" id="btnEntrar">Entrar</button>
     <div class="erro" id="entradaErro"></div>
   </div>
 </section>
@@ -313,8 +317,12 @@ const firebaseConfig = {
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged }
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+/* Conta única do site. A senha é a que você cadastrou no Firebase
+   (Authentication > Users) para este e-mail. */
+const CONTA = "casa@obra.app";
 import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -328,6 +336,7 @@ if (firebaseConfig.apiKey.startsWith("COLE_")) {
     "Abra o <code>index.html</code> e substitua o bloco <code>firebaseConfig</code> pelos dados do seu projeto. " +
     "O passo a passo está no <code>README.md</code>.";
   $("#btnEntrar").hidden = true;
+  $("#campoSenha").hidden = true;
 } else {
   iniciar();
 }
@@ -352,18 +361,32 @@ const custoDe = s => (Number(s.tempoGasto) || Number(s.tempoEstimado) || 0) * va
 const totalMat = m => (Number(m.qtd)||0) * (Number(m.valorUnit)||0);
 
 /* ---------- autenticação ---------- */
-$("#btnEntrar").addEventListener("click", async () => {
+const recados = {
+  "auth/invalid-credential": "Senha incorreta.",
+  "auth/wrong-password": "Senha incorreta.",
+  "auth/user-not-found": "A conta do site ainda não foi criada no Firebase.",
+  "auth/invalid-email": "A conta do site está configurada com um e-mail inválido.",
+  "auth/too-many-requests": "Muitas tentativas seguidas. Espere alguns minutos.",
+  "auth/operation-not-allowed": "Ative o provedor E-mail/senha no Firebase.",
+  "auth/network-request-failed": "Sem conexão com o Firebase."
+};
+
+async function entrar(){
+  const senha = $("#senha").value;
   $("#entradaErro").textContent = "";
-  const provider = new GoogleAuthProvider();
-  try { await signInWithPopup(auth, provider); }
-  catch (e) {
-    if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment") {
-      await signInWithRedirect(auth, provider);
-    } else {
-      $("#entradaErro").textContent = "Não deu para entrar: " + e.code;
-    }
+  if (!senha) { $("#entradaErro").textContent = "Digite a senha."; return; }
+  $("#btnEntrar").disabled = true;
+  try {
+    await signInWithEmailAndPassword(auth, CONTA, senha);
+    $("#senha").value = "";
+  } catch (e) {
+    $("#entradaErro").textContent = recados[e.code] || ("Não deu para entrar: " + e.code);
+  } finally {
+    $("#btnEntrar").disabled = false;
   }
-});
+}
+$("#btnEntrar").addEventListener("click", entrar);
+$("#senha").addEventListener("keydown", e => { if (e.key === "Enter") entrar(); });
 $("#btnSair").addEventListener("click", () => signOut(auth));
 
 onAuthStateChanged(auth, user => {
