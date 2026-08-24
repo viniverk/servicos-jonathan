@@ -160,6 +160,9 @@ main{padding:16px 0 60px}
 .aviso ol{color:var(--grafite-fraco);padding-left:20px;margin:0 0 14px}
 .aviso code{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:#fff;
   border:1px solid var(--linha);border-radius:5px;padding:1px 5px}
+.aviso-erro{position:fixed;left:12px;right:12px;bottom:12px;z-index:90;background:var(--vermelho);
+  color:#fff;padding:11px 14px;border-radius:var(--r);font-size:13.5px;
+  box-shadow:0 8px 24px rgba(35,33,30,.28);max-width:560px;margin:0 auto}
 .erro{color:var(--vermelho);font-size:13px;margin-top:10px;min-height:18px}
 </style>
 </head>
@@ -247,6 +250,8 @@ main{padding:16px 0 60px}
   </main>
 </div>
 
+<div class="aviso-erro" id="avisoErro" hidden></div>
+
 <!-- ====== folha de serviço ====== -->
 <div class="fundo" id="fundoServico" hidden>
   <div class="folha" role="dialog" aria-modal="true" aria-labelledby="tituloServico">
@@ -290,7 +295,6 @@ main{padding:16px 0 60px}
       <div class="campo"><label for="mData">Data</label><input id="mData" type="date"></div>
     </div>
     <div class="campo"><label for="mLoja">Loja</label><input id="mLoja" placeholder="Depósito Central"></div>
-    <div class="campo"><label for="mServico">Referente ao serviço</label><select id="mServico"></select></div>
     <div class="campo"><label for="mObs">Observações</label><textarea id="mObs" rows="2"></textarea></div>
     <div class="erro" id="mErro"></div>
     <div class="acoes">
@@ -325,7 +329,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
 /* Conta única do site. A senha é a que você cadastrou no Firebase
    (Authentication > Users) para este e-mail. */
 const CONTA = "viniciosv@gmail.com";
-import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, orderBy }
+import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const $ = s => document.querySelector(s);
@@ -354,6 +358,21 @@ const refMateriais= collection(db, "materiais");
 
 let valorHora = 30, servicos = [], materiais = [];
 let editandoServico = null, editandoMaterial = null;
+
+function avisar(e){
+  const cod = e?.code || e?.message || String(e);
+  const texto = cod.includes("permission-denied")
+    ? "O Firestore recusou a gravação. Publique as regras com o e-mail " + CONTA + "."
+    : "Deu erro: " + cod;
+  const bar = $("#avisoErro");
+  bar.textContent = texto;
+  bar.hidden = false;
+  clearTimeout(avisar.t);
+  avisar.t = setTimeout(() => { bar.hidden = true; }, 9000);
+  console.error(e);
+}
+window.addEventListener("unhandledrejection", ev => avisar(ev.reason));
+window.addEventListener("error", ev => avisar(ev.error || ev.message));
 
 const brl = v => (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const hs = min => {
@@ -413,19 +432,19 @@ function ouvir(){
     render();
   }, erroLeitura);
 
-  onSnapshot(query(refServicos, orderBy("ordem")), snap => {
-    servicos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  onSnapshot(refServicos, snap => {
+    servicos = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                   .sort((a,b) => (a.ordem || 0) - (b.ordem || 0));
     render();
   }, erroLeitura);
 
-  onSnapshot(query(refMateriais, orderBy("data")), snap => {
-    materiais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  onSnapshot(refMateriais, snap => {
+    materiais = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a,b) => (a.data || "").localeCompare(b.data || ""));
     render();
   }, erroLeitura);
 }
-function erroLeitura(e){
-  $("#entradaErro").textContent = "Sem permissão para ler os dados (" + e.code + "). Confira as regras do Firestore.";
-}
+function erroLeitura(e){ avisar(e); }
 
 /* ---------- valor da hora ---------- */
 $("#valorHora").addEventListener("change", async e => {
@@ -502,8 +521,7 @@ function renderMateriais(){
   let acumulado = 0;
   alvo.innerHTML = materiais.map(m => {
     acumulado += totalMat(m);
-    const serv = servicos.find(s => s.id === m.servicoId);
-    const det = [dataBR(m.data), `${m.qtd || 0} ${m.unidade || "un"} × ${brl(m.valorUnit)}`, m.loja, serv && serv.nome]
+    const det = [dataBR(m.data), `${m.qtd || 0} ${m.unidade || "un"} × ${brl(m.valorUnit)}`, m.loja]
       .filter(Boolean).join(" · ");
     return `<button class="mat" data-material="${m.id}">
       <span class="item">${esc(m.item)}</span>
@@ -569,7 +587,7 @@ $("#btnSalvarServico").addEventListener("click", async () => {
     if (editandoServico) await updateDoc(doc(db,"servicos",editandoServico.id), dados);
     else await addDoc(refServicos, { ...dados, ordem: servicos.length + 1 });
     $("#fundoServico").hidden = true;
-  } catch(e){ $("#sErro").textContent = "Não salvou: " + e.code; }
+  } catch(e){ $("#sErro").textContent = "Não salvou: " + (e.code || e.message); avisar(e); }
 });
 
 $("#btnExcluirServico").addEventListener("click", async () => {
@@ -589,9 +607,6 @@ function abrirMaterial(m){
   $("#mData").value = m?.data || hoje();
   $("#mLoja").value = m?.loja || "";
   $("#mObs").value = m?.obs || "";
-  $("#mServico").innerHTML = `<option value="">— sem vínculo —</option>` +
-    servicos.map(s => `<option value="${s.id}">${esc(s.nome)}</option>`).join("");
-  $("#mServico").value = m?.servicoId || "";
   $("#mErro").textContent = "";
   $("#acaoExcluirMaterial").hidden = !m;
   $("#fundoMaterial").hidden = false;
@@ -609,14 +624,13 @@ $("#btnSalvarMaterial").addEventListener("click", async () => {
     valorUnit: num($("#mValor").value),
     data: $("#mData").value || hoje(),
     loja: $("#mLoja").value.trim(),
-    servicoId: $("#mServico").value,
     obs: $("#mObs").value.trim()
   };
   try {
     if (editandoMaterial) await updateDoc(doc(db,"materiais",editandoMaterial.id), dados);
     else await addDoc(refMateriais, dados);
     $("#fundoMaterial").hidden = true;
-  } catch(e){ $("#mErro").textContent = "Não salvou: " + e.code; }
+  } catch(e){ $("#mErro").textContent = "Não salvou: " + (e.code || e.message); avisar(e); }
 });
 
 $("#btnExcluirMaterial").addEventListener("click", async () => {
