@@ -254,14 +254,14 @@ main{padding:16px 0 60px}
     <div class="campo"><label for="sNome">Serviço</label><input id="sNome" placeholder="Pendurar prateleiras"></div>
     <div class="campo"><label for="sLocal">Ambiente</label><input id="sLocal" placeholder="Quarto da Luara"></div>
     <div class="dupla">
-      <div class="campo"><label for="sEst">Tempo estimado (h)</label><input id="sEst" type="number" min="0" step="0.5" inputmode="decimal"></div>
-      <div class="campo"><label for="sGasto">Tempo gasto (h)</label><input id="sGasto" type="number" min="0" step="0.5" inputmode="decimal"></div>
+      <div class="campo"><label for="sHoras">Tempo gasto — horas</label><input id="sHoras" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+      <div class="campo"><label for="sMin">Minutos</label><input id="sMin" type="number" min="0" max="59" step="5" inputmode="numeric" placeholder="0"></div>
     </div>
     <div class="campo"><label for="sStatus">Status</label>
       <select id="sStatus"><option>A fazer</option><option>Em andamento</option><option>Concluído</option></select>
     </div>
     <div class="dupla">
-      <div class="campo"><label for="sPrev">Data prevista</label><input id="sPrev" type="date"></div>
+      <div class="campo"><label for="sInicio">Data início</label><input id="sInicio" type="date"></div>
       <div class="campo"><label for="sConcl">Data conclusão</label><input id="sConcl" type="date"></div>
     </div>
     <div class="campo"><label for="sObs">Observações</label><textarea id="sObs" rows="2"></textarea></div>
@@ -356,10 +356,15 @@ let valorHora = 30, servicos = [], materiais = [];
 let editandoServico = null, editandoMaterial = null;
 
 const brl = v => (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const hs  = v => (v||0).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}) + " h";
+const hs = min => {
+  const t = Math.max(0, Math.round(min || 0)), h = Math.floor(t/60), m = t % 60;
+  return h && m ? `${h}h ${m}min` : h ? `${h}h` : `${m}min`;
+};
+// aceita o formato antigo (tempoGasto em horas) enquanto não for reeditado
+const minutosDe = s => s.minutos != null ? Number(s.minutos) : (Number(s.tempoGasto)||0) * 60;
 const dataBR = s => s ? s.split("-").reverse().join("/") : "";
 const hoje = () => new Date().toISOString().slice(0,10);
-const custoDe = s => (Number(s.tempoGasto) || Number(s.tempoEstimado) || 0) * valorHora;
+const custoDe = s => minutosDe(s) / 60 * valorHora;
 const totalMat = m => (Number(m.qtd)||0) * (Number(m.valorUnit)||0);
 
 /* ---------- autenticação ---------- */
@@ -466,9 +471,10 @@ function renderServicos(){
   }
   alvo.innerHTML = servicos.map(s => {
     const cls = s.status === "Concluído" ? "st-concluido" : s.status === "Em andamento" ? "st-andamento" : "st-fazer";
-    const tempo = s.tempoGasto ? hs(s.tempoGasto) + " gastas" : s.tempoEstimado ? hs(s.tempoEstimado) + " previstas" : "sem tempo";
+    const min = minutosDe(s);
+    const tempo = min ? hs(min) : "sem tempo lançado";
     const quando = s.dataConclusao ? "concluído " + dataBR(s.dataConclusao)
-                 : s.dataPrevista  ? "previsto "  + dataBR(s.dataPrevista) : "";
+                 : s.dataInicio    ? "início "    + dataBR(s.dataInicio) : "";
     return `<button class="card" data-servico="${s.id}">
       <span>
         <span class="nome">${esc(s.nome)}</span><br>
@@ -511,13 +517,11 @@ function renderMateriais(){
 }
 
 function renderResumo(gerado, retirado, saldo){
-  const est = servicos.reduce((t,s) => t + (Number(s.tempoEstimado)||0), 0);
-  const gasto = servicos.reduce((t,s) => t + (Number(s.tempoGasto)||0), 0);
+  const gasto = servicos.reduce((t,s) => t + minutosDe(s), 0);
   const feitos = servicos.filter(s => s.status === "Concluído").length;
   const itens = [
     ["Valor da hora", brl(valorHora), ""],
     ["Serviços concluídos", `${feitos} de ${servicos.length}`, ""],
-    ["Tempo estimado", hs(est), ""],
     ["Tempo gasto", hs(gasto), ""],
     ["Gerado em serviços", brl(gerado), ""],
     ["Retirado em material", brl(retirado), ""],
@@ -535,10 +539,11 @@ function abrirServico(s){
   $("#tituloServico").textContent = s ? "Editar serviço" : "Novo serviço";
   $("#sNome").value = s?.nome || "";
   $("#sLocal").value = s?.local || "";
-  $("#sEst").value = s?.tempoEstimado ?? "";
-  $("#sGasto").value = s?.tempoGasto ?? "";
+  const min = s ? minutosDe(s) : 0;
+  $("#sHoras").value = min ? Math.floor(min/60) : "";
+  $("#sMin").value = min % 60 ? min % 60 : "";
   $("#sStatus").value = s?.status || "A fazer";
-  $("#sPrev").value = s?.dataPrevista || "";
+  $("#sInicio").value = s?.dataInicio || "";
   $("#sConcl").value = s?.dataConclusao || "";
   $("#sObs").value = s?.obs || "";
   $("#sErro").textContent = "";
@@ -554,10 +559,9 @@ $("#btnSalvarServico").addEventListener("click", async () => {
   const dados = {
     nome,
     local: $("#sLocal").value.trim(),
-    tempoEstimado: num($("#sEst").value),
-    tempoGasto: num($("#sGasto").value),
+    minutos: (Number($("#sHoras").value) || 0) * 60 + (Number($("#sMin").value) || 0),
     status: $("#sStatus").value,
-    dataPrevista: $("#sPrev").value || "",
+    dataInicio: $("#sInicio").value || "",
     dataConclusao: $("#sConcl").value || "",
     obs: $("#sObs").value.trim()
   };
@@ -635,18 +639,18 @@ const num = v => v === "" || v === null ? null : Number(v);
 /* ---------- carga inicial (a lista da planilha) ---------- */
 async function semear(){
   const base = [
-    ["Pendurar prateleiras","Quarto da Luara",null,null,"A fazer","",""],
-    ["Fixar o trava-porta","Quarto da Luara",null,null,"A fazer","",""],
-    ["Trocar o gabinete","Banheiro",1,null,"A fazer","2026-08-21",""],
-    ["Passar massa corrida na parede","Sala e entrada da cozinha",null,null,"A fazer","",""],
-    ["Passar massa corrida","Fachada da casa",null,null,"A fazer","",""],
-    ["Fechar parede","Escritório do Vini",null,null,"A fazer","",""],
-    ["Instalação Torneira","Cozinha",1,1,"Concluído","2026-08-18","2026-08-18"],
-    ["Instalação Forro","Sala e entrada da cozinha",8,8,"Concluído","2026-08-14","2026-08-14"]
+    ["Pendurar prateleiras","Quarto da Luara",0,"A fazer","",""],
+    ["Fixar o trava-porta","Quarto da Luara",0,"A fazer","",""],
+    ["Trocar o gabinete","Banheiro",0,"A fazer","",""],
+    ["Passar massa corrida na parede","Sala e entrada da cozinha",0,"A fazer","",""],
+    ["Passar massa corrida","Fachada da casa",0,"A fazer","",""],
+    ["Fechar parede","Escritório do Vini",0,"A fazer","",""],
+    ["Instalação Torneira","Cozinha",60,"Concluído","2026-08-18","2026-08-18"],
+    ["Instalação Forro","Sala e entrada da cozinha",480,"Concluído","2026-08-14","2026-08-14"]
   ];
   for (let i = 0; i < base.length; i++){
-    const [nome,local,tempoEstimado,tempoGasto,status,dataPrevista,dataConclusao] = base[i];
-    await addDoc(refServicos, { nome, local, tempoEstimado, tempoGasto, status, dataPrevista, dataConclusao, obs:"", ordem: i+1 });
+    const [nome,local,minutos,status,dataInicio,dataConclusao] = base[i];
+    await addDoc(refServicos, { nome, local, minutos, status, dataInicio, dataConclusao, obs:"", ordem: i+1 });
   }
   await setDoc(refConfig, { valorHora: 30 }, { merge: true });
 }
