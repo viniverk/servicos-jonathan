@@ -322,7 +322,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
 
 /* Conta única do site. A senha é a que você cadastrou no Firebase
    (Authentication > Users) para este e-mail. */
-const CONTA = "casa@obra.app";
+const CONTA = "viniciosv@gmail.com";
 import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -362,9 +362,9 @@ const totalMat = m => (Number(m.qtd)||0) * (Number(m.valorUnit)||0);
 
 /* ---------- autenticação ---------- */
 const recados = {
-  "auth/invalid-credential": "Senha incorreta.",
+  "auth/invalid-credential": "Senha incorreta — ou a conta " + CONTA + " ainda não existe no Firebase.",
   "auth/wrong-password": "Senha incorreta.",
-  "auth/user-not-found": "A conta do site ainda não foi criada no Firebase.",
+  "auth/user-not-found": "A conta " + CONTA + " ainda não foi criada no Firebase.",
   "auth/invalid-email": "A conta do site está configurada com um e-mail inválido.",
   "auth/too-many-requests": "Muitas tentativas seguidas. Espere alguns minutos.",
   "auth/operation-not-allowed": "Ative o provedor E-mail/senha no Firebase.",
